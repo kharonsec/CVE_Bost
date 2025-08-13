@@ -1,6 +1,6 @@
 # CVE Bot - Automatic CVE Posting to Bluesky
 
-A Python bot that automatically monitors for new CVEs (Common Vulnerabilities and Exposures) from multiple sources and posts them to Bluesky social media platform.
+A minimal, production-ready Python bot that automatically monitors for new CVEs (Common Vulnerabilities and Exposures) from multiple sources and posts them to Bluesky social media platform.
 
 ## Features
 
@@ -10,6 +10,7 @@ A Python bot that automatically monitors for new CVEs (Common Vulnerabilities an
 - **Scheduled Operation**: Can run continuously or on-demand
 - **Rate Limiting**: Respects API limits and adds delays between posts
 - **Comprehensive Logging**: Detailed logs for monitoring and debugging
+- **Minimal Footprint**: Clean, production-ready codebase
 
 ## Prerequisites
 
@@ -25,19 +26,6 @@ A Python bot that automatically monitors for new CVEs (Common Vulnerabilities an
    pip install -r requirements.txt
    ```
 
-### 🚀 Quick Start (Recommended for First-Time Users)
-
-For immediate setup without complex configuration:
-
-```bash
-python quick_start.py
-```
-
-This will:
-- Create a basic `.env` file
-- Show step-by-step setup instructions
-- Help you get running in minutes
-
 ## Configuration
 
 1. Copy `env.example` to `.env`:
@@ -52,18 +40,18 @@ This will:
    BLUESKY_PASSWORD=your-app-password
    
    # CVE Sources (comma-separated)
-CVE_SOURCES=nvd,cisa,github
-
-# NVD API Configuration
-NVD_API_KEY=your-nvd-api-key-optional
-NVD_RESULTS_PER_PAGE=2000
-NVD_MAX_DAYS_BACK=120
-
-# NVD Filtering Options
-NVD_SEVERITY_FILTER=CRITICAL,HIGH
-NVD_INCLUDE_KEV=true
-NVD_INCLUDE_CERT_ALERTS=false
-NVD_INCLUDE_CERT_NOTES=false
+   CVE_SOURCES=nvd,cisa,github
+   
+   # NVD API Configuration
+   NVD_API_KEY=your-nvd-api-key-optional
+   NVD_RESULTS_PER_PAGE=2000
+   NVD_MAX_DAYS_BACK=7
+   
+   # NVD Filtering Options
+   NVD_SEVERITY_FILTER=CRITICAL,HIGH
+   NVD_INCLUDE_KEV=true
+   NVD_INCLUDE_CERT_ALERTS=false
+   NVD_INCLUDE_CERT_NOTES=false
    
    # Posting Configuration
    POST_INTERVAL_MINUTES=30
@@ -97,35 +85,43 @@ NVD_INCLUDE_CERT_NOTES=false
 
 ### Run Once
 ```bash
-python cve_bot.py
+python3 cve_bot.py
 # Choose option 1 when prompted
 ```
 
 ### Run Scheduled
 ```bash
-python cve_bot.py
+python3 cve_bot.py
 # Choose option 2 when prompted
 ```
 
-### Test Connections
+### Clear Processed CVEs and Run
+```bash
+python3 cve_bot.py
+# Choose option 3 when prompted
+```
+
 The bot automatically tests connections before running.
 
 ## CVE Sources
 
 ### NVD (National Vulnerability Database)
+- **URL:** https://services.nvd.nist.gov/rest/json/cves/2.0
 - Official CVE database with comprehensive API access
 - Includes CVSS v3/v4 scores, CWE information, and detailed metadata
 - Advanced filtering by severity, KEV status, CERT alerts, and more
-- Keyword and CPE-based searching capabilities
 - Rate limited without API key (higher limits with API key)
 - Configurable date ranges and result limits
 
 ### CISA (Cybersecurity & Infrastructure Security Agency)
+- **URL:** https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
 - Known Exploited Vulnerabilities catalog
 - Focuses on actively exploited CVEs
 - No rate limiting
+- Public JSON feed
 
 ### GitHub Security Advisories
+- **URL:** https://github.com/advisories
 - Security advisories from GitHub repositories
 - Currently simplified implementation
 
@@ -133,7 +129,7 @@ The bot automatically tests connections before running.
 
 Posts include:
 - CVE ID and severity level
-- Description (truncated if too long)
+- Description (smartly truncated to fit Bluesky's 300-character limit)
 - CVSS score (if available)
 - Exploitation status (if known)
 - Source and publication date
@@ -141,19 +137,14 @@ Posts include:
 
 Example post:
 ```
-🔴 CVE-2024-1234 - Critical Severity
+🔴 CVE-2024-1234 - Critical
 
-A critical vulnerability in the example software that allows remote code execution...
+A critical vulnerability in the example software that allows remote code execution through crafted input...
 
-CVSS v3: 9.8 | CVSS v4: 9.9
-CWE: CWE-287, CWE-200
-Status: Analyzed
-🚨 Known Exploited (KEV)
-Source: NVD
-Published: 2024-01-15
-Modified: 2024-01-16
-
-#CVE #Cybersecurity #Vulnerability #HighPriority #Exploited #KEV
+CVSS: 9.8
+🚨 Exploited
+Source: CISA
+#CVE #Security #HighPriority
 ```
 
 ## Configuration Options
@@ -172,11 +163,26 @@ Modified: 2024-01-16
 |--------|-------------|---------|
 | `NVD_API_KEY` | NVD API key for higher rate limits | (none) |
 | `NVD_RESULTS_PER_PAGE` | Maximum results per API request | 2000 |
-| `NVD_MAX_DAYS_BACK` | Days back to search for CVEs | 120 |
+| `NVD_MAX_DAYS_BACK` | Days back to search for CVEs | 7 |
 | `NVD_SEVERITY_FILTER` | Comma-separated severity levels | CRITICAL,HIGH |
 | `NVD_INCLUDE_KEV` | Include Known Exploited Vulnerabilities | true |
 | `NVD_INCLUDE_CERT_ALERTS` | Include CERT Technical Alerts | false |
 | `NVD_INCLUDE_CERT_NOTES` | Include CERT Vulnerability Notes | false |
+
+## Project Structure
+
+```
+CVE_Bost/
+├── cve_bot.py          # Main bot orchestration
+├── cve_sources.py      # CVE data fetching
+├── bluesky_client.py   # Bluesky authentication & posting
+├── config.py           # Configuration management
+├── requirements.txt    # Python dependencies
+├── .env               # Your credentials (create from env.example)
+├── env.example        # Configuration template
+├── README.md          # This file
+└── .gitignore         # Git exclusions
+```
 
 ## Logging
 
@@ -193,6 +199,7 @@ The bot includes comprehensive error handling:
 - Graceful handling of API failures
 - Retry logic for transient errors
 - Detailed error logging
+- Individual source failure isolation
 
 ## Security Considerations
 
@@ -218,6 +225,7 @@ The bot includes comprehensive error handling:
 - Check your internet connection
 - Verify the CVE sources are accessible
 - Check the logs for specific error messages
+- Use option 3 to clear processed CVEs and re-run
 
 ### Rate Limiting
 - Increase delays between posts
